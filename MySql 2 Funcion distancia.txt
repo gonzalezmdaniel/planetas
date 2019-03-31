@@ -1,0 +1,15 @@
+#   CREANDO LA FUNCION DISTANCIA , ENTRE DOS COORDENADAS
+drop function if exists distancia;
+delimiter $$
+create function distancia(x1 float, y1 float, x2 float, y2 float) 
+  returns float 
+  BEGIN
+    DECLARE resultado float;
+    set resultado=pow( (x2-x1), 2) + pow( (y2-y1), 2);
+    IF resultado<0 THEN
+      set resultado= resultado*(-1); 
+    END IF;
+    set resultado=SQRT(resultado);
+    RETURN resultado;
+  END; $$
+DELIMITER ; $$
