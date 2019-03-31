@@ -1,0 +1,74 @@
+# CREANDO PROCEDIMIENTO CALCULAR, QUE LLENA LAS 2 TABLAS CON LAS OPERACIONES, LO EJECUTO AL FINAL CON  " CALL CALCULAR "
+DROP procedure IF EXISTS calcular;
+DELIMITER $$ ;
+CREATE procedure calcular() 
+BEGIN 
+#en que grado se encuentra cada planeta
+DECLARE g1 int DEFAULT 0;
+DECLARE g2 int DEFAULT 360;
+DECLARE g3 int DEFAULT 0;
+#coordenadas X y Y de cada planeta
+DECLARE x1,y1, x2,y2, x3,y3,dAB,dBC,dCA float(9,0) default 0;
+DECLARE perimetro float;
+DECLARE numDia int default 0;
+DECLARE diasSequia,diasLluvia,diasOptimo,diasSinCambios int default 0;
+DECLARE m,b float default 0;
+DECLARE difGradosAB, difGradosBC, difGradosCA int;
+set foreign_key_checks=0;  truncate picolluvia; truncate dias; set foreign_key_checks=1;
+START TRANSACTION;
+WHILE numDia<3650 DO 
+  set numDia=numDia+1;
+  set g1 = g1+1;  set g2 = g2-5;  set g3 = g3+3;
+  if (g1>360) THEN set g1=g1-360;
+  END IF;
+  IF (g2<1) THEN set g2=g2+360;
+  END IF;
+  IF (g3>360) THEN set g3=g3-360;
+  END IF;
+  #calculo la coordenada de cada planeta segun el movimiento angular, sen(g)=CatOpuesto/hipotenusa, x=sen(g)*hip  
+  set x1 = SIN( radians(g1) )*500;
+  set y1 = COS( radians(g1) )*500;
+  set x2 = SIN( radians(g2) )*1000;
+  set y2 = COS( radians(g2) )*1000;
+  set x3 = SIN( radians(g3) )*2000;
+  set y3 = COS( radians(g3) )*2000;
+  set dAB = distancia(x1,y1,x2,y2);
+  set dBC = distancia(x2,y2,x3,y3);
+  set dCA = distancia(x3,y3,x1,y1);
+  set perimetro = dAB+dBC+dCA;
+  #comprobando si un lado es igual a la suma de los otros, seria una recta
+  IF ( (dAB=dBC+dCA) OR (dBC=dAB+dCA) OR (dCA=dAB+dBC) ) THEN
+    # Select numDia,"recta",dAB,dBC,dCA,perimetro as p;
+    # select g1,g2,g3;
+    # obtenemos la ecuacion de la recta y = mx + b , pero calculamos primero la pendiente m
+    set m = (y2-y1) / (x2-x1);
+    # obtener el ordinal b , despejandolo en la ecuacion
+    set b = y1-(m*x1);
+    #comprobando si la coordenada 0,0 se encuentra en la recta
+    IF ( 0 = ((m*0) + b) ) THEN
+      insert into dias values (numDia,'SEQUIA');
+      set diasOptimo=diasOptimo+1;
+    ELSE
+      insert into dias values (numDia,'OPTIMO');     
+      set diasSequia=diasSequia+1;
+    END IF;
+  ELSE 
+    #si no es recta, el sol estara dentro del triangulo solo si existe una diferencia angular de 180 grados
+    set difGradosAB=ABS(g1-g2);
+    set difGradosBC=ABS(g2-g3);
+    set difGradosCA=ABS(g3-g1);
+    IF (difGradosAB<180 AND difGradosBC<180 AND difGradosCA<180) THEN 
+       set diasLluvia=diasLluvia+1;
+       insert into dias values (numDia,'LLUVIA'); 
+       insert into picoLluvia values (numDia,perimetro);
+    ELSE
+       set diasSinCambios=diasSinCambios+1;
+    END IF;
+  END IF;
+END WHILE;
+COMMIT;
+END $$ 
+DELIMITER ; $$
+
+# al final ejecuto el procedimiento calcular, quedando asi, las 2 tablas llenas con los resultados
+# CALL CALCULAR;     
