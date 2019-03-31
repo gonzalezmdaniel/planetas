@@ -1,0 +1,19 @@
+#  CREANDO LA BASE DE DATOS Y LAS TABLAS
+create database planetas;
+use planetas;
+DROP TABLE IF EXISTS `Dias`;
+CREATE TABLE `Dias` (
+  `dia` int(10) unsigned NOT NULL,
+  `clima` varchar(20) NOT NULL,
+  PRIMARY KEY (`dia`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+DROP TABLE IF EXISTS `picoLluvia`;
+CREATE TABLE `picoLluvia` (
+  `dia` int(10) unsigned NOT NULL,
+  `cantidad` float NOT NULL,
+  KEY `dia` (`dia`),
+  CONSTRAINT `dia_ibfk_1` FOREIGN KEY (`dia`) REFERENCES `dias` (`dia`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+# usuario habilitado  usuario:  Planetas   y contraseña:  123
